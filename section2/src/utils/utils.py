@@ -1,6 +1,7 @@
 """
 Various utility methods in this module
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -9,6 +10,7 @@ from PIL import Image
 
 # Tell Matplotlib to not try and use interactive backend
 mpl.use("agg")
+
 
 def mpl_image_grid(images):
     """
@@ -21,10 +23,10 @@ def mpl_image_grid(images):
         Matplotlib figure
     """
     # Create a figure to contain the plot.
-    n = min(images.shape[0], 16) # no more than 16 thumbnails
+    n = min(images.shape[0], 16)  # no more than 16 thumbnails
     rows = 4
     cols = (n // 4) + (1 if (n % 4) != 0 else 0)
-    figure = plt.figure(figsize=(2*rows, 2*cols))
+    figure = plt.figure(figsize=(2 * rows, 2 * cols))
     plt.subplots_adjust(0, 0, 1, 1, 0.001, 0.001)
     for i in range(n):
         # Start next subplot.
@@ -34,19 +36,30 @@ def mpl_image_grid(images):
         plt.grid(False)
         if images.shape[1] == 3:
             # this is specifically for 3 softmax'd classes with 0 being bg
-            # We are building a probability map from our three classes using 
+            # We are building a probability map from our three classes using
             # fractional probabilities contained in the mask
             vol = images[i].detach().numpy()
-            img = [[[(1-vol[0,x,y])*vol[1,x,y], (1-vol[0,x,y])*vol[2,x,y], 0] \
-                            for y in range(vol.shape[2])] \
-                            for x in range(vol.shape[1])]
+            img = [
+                [
+                    [
+                        (1 - vol[0, x, y]) * vol[1, x, y],
+                        (1 - vol[0, x, y]) * vol[2, x, y],
+                        0,
+                    ]
+                    for y in range(vol.shape[2])
+                ]
+                for x in range(vol.shape[1])
+            ]
             plt.imshow(img)
-        else: # plotting only 1st channel
-            plt.imshow((images[i, 0]*255).int(), cmap= "gray")
+        else:  # plotting only 1st channel
+            plt.imshow((images[i, 0] * 255).int(), cmap="gray")
 
     return figure
 
-def log_to_tensorboard(writer, loss, data, target, prediction_softmax, prediction, counter):
+
+def log_to_tensorboard(
+    writer, loss, data, target, prediction_softmax, prediction, counter
+):
     """Logs data to Tensorboard
 
     Arguments:
@@ -58,16 +71,20 @@ def log_to_tensorboard(writer, loss, data, target, prediction_softmax, predictio
         prediction {tensor} -- raw prediction (to be used in argmax)
         counter {int} -- batch and epoch counter
     """
-    writer.add_scalar("Loss",\
-                    loss, counter)
-    writer.add_figure("Image Data",\
-        mpl_image_grid(data.float().cpu()), global_step=counter)
-    writer.add_figure("Mask",\
-        mpl_image_grid(target.float().cpu()), global_step=counter)
-    writer.add_figure("Probability map",\
-        mpl_image_grid(prediction_softmax.cpu()), global_step=counter)
-    writer.add_figure("Prediction",\
-        mpl_image_grid(torch.argmax(prediction.cpu(), dim=1, keepdim=True)), global_step=counter)
+    writer.add_scalar("Loss", loss, counter)
+    writer.add_figure(
+        "Image Data", mpl_image_grid(data.float().cpu()), global_step=counter
+    )
+    writer.add_figure("Mask", mpl_image_grid(target.float().cpu()), global_step=counter)
+    writer.add_figure(
+        "Probability map", mpl_image_grid(prediction_softmax.cpu()), global_step=counter
+    )
+    writer.add_figure(
+        "Prediction",
+        mpl_image_grid(torch.argmax(prediction.cpu(), dim=1, keepdim=True)),
+        global_step=counter,
+    )
+
 
 def save_numpy_as_image(arr, path):
     """
@@ -77,8 +94,9 @@ def save_numpy_as_image(arr, path):
         arr {array} -- 2D array of pixels
         path {string} -- path to file
     """
-    plt.imshow(arr, cmap="gray") #Needs to be in row,col order
+    plt.imshow(arr, cmap="gray")  # Needs to be in row,col order
     plt.savefig(path)
+
 
 def med_reshape(image, new_shape):
     """
@@ -96,6 +114,6 @@ def med_reshape(image, new_shape):
     reshaped_image = np.zeros(new_shape)
 
     # TASK: write your original image into the reshaped image
-    # <CODE GOES HERE>
+    reshaped_image[: image.shape[0], : image.shape[1], : image.shape[2]] = image
 
     return reshaped_image
